@@ -2,12 +2,15 @@
 
 Window::Window(const char* title, int width, int height) {
 	glfwInit();
-	window = glfwCreateWindow(width, height, title, nullptr, nullptr);
+	this->window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 	glfwMakeContextCurrent(window);
+	glfwSwapInterval(0);
 	gl3wInit();
 
 	this->width = width;
 	this->height = height;
+	this->activeScene = nullptr;
+	this->previousCursorPosition = glm::vec2(0.0f, 0.0f);
 
 	auto resizeCallbackFunction = [](GLFWwindow* window, int width, int height) {
 		Window* myWindow =
@@ -15,8 +18,24 @@ Window::Window(const char* title, int width, int height) {
 		myWindow->resizeCallback(width, height);
 	};
 
+	auto cursorPosCallbackFunction = [](GLFWwindow* window, double posx, double posy) {
+		Window* myWindow =
+			reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		myWindow->cursorPosCallback(posx, posy);
+	};
+
+	auto keyCallbackFunction = [](GLFWwindow* window, int key, int scancode, int action, int mod) {
+		Window* myWindow =
+			reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		myWindow->keyCallback(key, scancode, action, mod);
+	};
+
 	glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
+
 	glfwSetWindowSizeCallback(window, resizeCallbackFunction);
+	glfwSetCursorPosCallback(window, cursorPosCallbackFunction);
+	glfwSetKeyCallback(window, keyCallbackFunction);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 Window::~Window() {
@@ -24,14 +43,14 @@ Window::~Window() {
 	glfwTerminate();
 }
 
-void Window::resizeCallback(int newWidth, int newHeight) {
-	width = newWidth;
-	height = newHeight;
-}
+bool Window::ShouldClose() { return glfwWindowShouldClose(window); }
 
-bool Window::shouldClose() { return glfwWindowShouldClose(window); }
-
-void Window::refresh() {
+void Window::Refresh() {
 	glfwSwapBuffers(window);
 	glfwPollEvents();
+}
+
+void Window::RenderScene(Scene* scene) {
+	this->activeScene = scene;
+	Renderer::RenderScene(scene);
 }

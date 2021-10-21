@@ -12,10 +12,7 @@ Mesh Scene::CreateMesh(aiMesh* mesh, const aiScene* model) {
 		if (mesh->HasNormals()) {
 			vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 		}
-		else {
-			vertex.normal = glm::vec3(1.0, 0.0, 0.0); // TODO Calculate normal
-		}
-		vertex.color = glm::vec3(255.0f, 255.0f, 255.0);
+		vertex.color = glm::vec3(26.0f / 255.0f, 228.0f / 255.0f, 235.0f / 255.0f);
 		meshVertices.push_back(vertex);
 		this->totalVertices++;
 	}

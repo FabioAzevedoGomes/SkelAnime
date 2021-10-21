@@ -110,13 +110,13 @@ void Renderer::SetupBuffers(Scene* scene) {
 
 	// Colors
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Vertex_Color_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), normal, GL_DYNAMIC_STORAGE_BIT);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), color, GL_DYNAMIC_STORAGE_BIT);
 	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(vertexColor);
 
 	// Normals
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Vertex_Normal_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), color, GL_DYNAMIC_STORAGE_BIT);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), normal, GL_DYNAMIC_STORAGE_BIT);
 	glVertexAttribPointer(vertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(vertexNormal);
 

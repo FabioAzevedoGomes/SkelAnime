@@ -34,9 +34,9 @@ int main(int argc, char** argv) {
 	Scene* scene = new Scene(LoadModelFromFile(argv[1]));
 	Renderer::Setup(scene);
 
-	while (!window.shouldClose()) {
-		Renderer::RenderScene(scene);
-		window.refresh();
+	while (!window.ShouldClose()) {
+		window.RenderScene(scene);
+		window.Refresh();
 	}
 
 	return 0;

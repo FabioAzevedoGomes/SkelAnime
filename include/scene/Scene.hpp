@@ -33,6 +33,7 @@ public:
 	float* GetVertexPositionInformation();
 	float* GetVertexNormalInformation();
 	float* GetVertexColorInformation();
+
 };
 
 #endif // SKLEANIME_SCENE_HPP
