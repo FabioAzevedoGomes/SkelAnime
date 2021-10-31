@@ -7,26 +7,27 @@
 
 #include <assimp/scene.h>
 #include <assimp/mesh.h>
+#include <map>
+#include <string>
 
+#include "Model.hpp"
 #include "Camera.hpp"
-#include "Mesh.hpp"
 
 class Scene {
 private:
-	const aiScene* model;
-	std::vector<Mesh> meshes;
-	long totalVertices;
+	Model* model;
 	Camera* camera;
 
 protected:
-	Mesh CreateMesh(aiMesh* mesh, const aiScene* model);
-	void ProcessNodesRecursively(aiNode* node);
+	void AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices);
+	void ProcessSkeletonNodesRecursively(Skeleton* skeleton, aiNode* node, std::map<std::string, int>& nameToPositionMap);
+	void ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices);
 
 public:
-	Scene(const aiScene* model);
+	Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair);
 	virtual ~Scene();
 
-	const aiScene* GetModel();
+	Model* GetModel();
 	Camera* GetCamera();
 	long GetVertexCount();
 

@@ -7,31 +7,37 @@
 #include "Window.hpp"
 #include "Renderer.hpp"
 
-Assimp::Importer importer;
+Assimp::Importer modelImporter;
+Assimp::Importer skeletonImporter;
 
 void LogErrorAndQuit(const char* message, int error_code) {
 	std::cerr << message << std::endl;
 	exit(error_code);
 }
 
-const aiScene* LoadModelFromFile(const std::string filename) {
+std::pair<const aiScene*, const aiScene*> LoadModelsFromFiles(const std::string skeletonFilename, const std::string modelFilename) {
 
-	const aiScene* scene = importer.ReadFile(filename, aiProcess_GenNormals);
+	const aiScene* skeleton = skeletonImporter.ReadFile(skeletonFilename, aiProcess_GenNormals);
+	const aiScene* model = modelImporter.ReadFile(modelFilename, aiProcess_GenNormals);
 
-	if (!scene) {
+	if (!model) {
 		LogErrorAndQuit("Could not load model", 1);
 	}
 
-	return scene;
+	if (!skeleton) {
+		LogErrorAndQuit("Could not load skeleton", 1);
+	}
+
+	return { skeleton, model };
 }
 
 int main(int argc, char** argv) {
-	if (argc < 1) {
-		LogErrorAndQuit("Please drag file into application", 1);
+	if (argc < 2) {
+		LogErrorAndQuit("Please input skeleton and model files", 1);
 	}
 
 	Window window;
-	Scene* scene = new Scene(LoadModelFromFile(argv[1]));
+	Scene* scene = new Scene(LoadModelsFromFiles(argv[1], argv[2]));
 	Renderer::Setup(scene);
 
 	while (!window.ShouldClose()) {
