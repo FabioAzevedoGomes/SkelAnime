@@ -1,0 +1,16 @@
+# Open points
+- Create GUI
+	- Armature structure view
+		- Parent
+		- Children
+		- Transformation
+		- Rest pose transformation
+	- View bones in model
+		- Using pyramids
+	- Select Bones
+		- In skeleton three
+		- In model
+	- Switch between wireframe and solid
+- Export poses
+- Calculate weights for skinning
+- Make skinning shaders
