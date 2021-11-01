@@ -66,8 +66,6 @@ Scene::Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair) {
 	ProcessModelNodesRecursively(skeletonModelPair.second->mRootNode, skeletonModelPair.second, vertices);
 
 	this->model = new Model(skeleton, vertices);
-	//this->model->PrintSkeleton();
-	//this->model->PrintVertices();
 }
 
 Scene::~Scene() {

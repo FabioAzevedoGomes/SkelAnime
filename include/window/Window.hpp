@@ -17,6 +17,7 @@ private:
 	bool pressed[GLFW_KEY_MENU];
 	glm::vec2 previousCursorPosition;
 	GLFWwindow* window;
+	bool captureMouse;
 
 	Scene* activeScene;
 
@@ -28,15 +29,19 @@ protected:
 	}
 
 	inline void cursorPosCallback(double x, double y) {
-		double dx = x - this->previousCursorPosition.x;
-		double dy = y - this->previousCursorPosition.y;
+		double dx, dy;
+		dx = x - this->previousCursorPosition.x;
+		dy = y - this->previousCursorPosition.y;
 
 		this->previousCursorPosition = glm::vec2(x, y);
-		this->activeScene->GetCamera()->Rotate(dx, dy);
+
+		if (this->captureMouse) {
+			this->activeScene->GetCamera()->Rotate(dx, dy);
+		}
 	}
 
 	inline void keyCallback(int key, int scancode, int action, int mod) {
-		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+		if (key == CLOSE_KEY && action == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GL_TRUE);
 
 		if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -48,12 +53,21 @@ protected:
 		if (pressed[GLFW_KEY_A]) this->activeScene->GetCamera()->MoveX(-1);
 		if (pressed[GLFW_KEY_S]) this->activeScene->GetCamera()->MoveZ(-1);
 		if (pressed[GLFW_KEY_D]) this->activeScene->GetCamera()->MoveX(1);
+
+		if (pressed[CAPTURE_MOUSE_KEY]) {
+			this->captureMouse = !this->captureMouse;
+			if (this->captureMouse)
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			else
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
 	}
 
 public:
 	Window(const char* title = DEFAULT_TITLE, int width = DEFAULT_WIDTH, int height = DEFAULT_HEIGHT);
 	~Window();
 
+	GLFWwindow* GetWindow();
 	bool ShouldClose();
 	void Refresh();
 	void RenderScene(Scene* scene);
