@@ -20,6 +20,23 @@ PropertyGUI::~PropertyGUI() {
 	ImGui::DestroyContext();
 }
 
+void RenderBoneTree(std::vector<Bone>& bones, int boneIndex) {
+	if (boneIndex >= 0 && boneIndex < bones.size()) {
+		Bone bone = bones[boneIndex];
+		if (bone.children.size() > 0) {
+			if (ImGui::TreeNode(bone.name.c_str())) {
+				for (auto child = bone.children.begin(); child != bone.children.end(); child++) {
+					RenderBoneTree(bones, *child);
+				}
+				ImGui::TreePop();
+			}
+		}
+		else {
+			ImGui::Text(bone.name.c_str());
+		}
+	}
+}
+
 void PropertyGUI::Draw() {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -28,6 +45,13 @@ void PropertyGUI::Draw() {
 	ImGui::NewFrame();
 
 	ImGui::Begin("Properties", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+	if (ImGui::TreeNode("Armature")) {
+
+		std::vector<Bone>& bones = this->scene->GetModel()->GetSkeleton()->GetBones();
+		RenderBoneTree(bones, 0);
+		ImGui::TreePop();
+	}
+
 	ImGui::Spacing();
 	ImGui::End();
 

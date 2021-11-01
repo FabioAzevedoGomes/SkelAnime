@@ -32,6 +32,10 @@ void Model::PrintVertices() {
 	}
 }
 
+Skeleton* Model::GetSkeleton() {
+	return &this->restSkeleton;
+}
+
 long Model::GetVertexCount() {
 	return this->vertices.size();
 }

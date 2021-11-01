@@ -13,6 +13,10 @@ int Skeleton::GetNumberOfBones() {
 	return this->bones.size();
 }
 
+std::vector<Bone>& Skeleton::GetBones() {
+	return this->bones;
+}
+
 void Skeleton::PrintBone(int index) {
 	if (index < 0 || index > this->bones.size() - 1) {
 		std::cerr << "Bone index " << index << " out of range [0, " << this->bones.size() - 1 << "]." << std::endl;
@@ -36,7 +40,7 @@ void Skeleton::AddBone(int parent, glm::mat4 transformation, std::string name) {
 	bone.name = name;
 	this->bones.push_back(bone);
 	if (parent >= 0 && parent <= this->bones.size() - 1) {
-		this->bones[parent].children.push_back(this->bones.size() - 1); 
+		this->bones[parent].children.push_back(this->bones.size() - 1);
 	}
 }
 
