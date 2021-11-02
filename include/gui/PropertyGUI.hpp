@@ -14,8 +14,12 @@
 
 class PropertyGUI {
 private:
-	imgui_addons::ImGuiFileBrowser fileDialog;
+	std::vector<bool> displayProperties;
 	Scene* scene;
+
+protected:
+	void DrawBonePropertyWindow(std::vector<Bone>& bones, int index);
+	void RenderBoneTree(std::vector<Bone>& bones, int boneIndex);
 
 public:
 	PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene);
