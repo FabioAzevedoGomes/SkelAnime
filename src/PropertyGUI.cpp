@@ -1,6 +1,8 @@
 #include "PropertyGUI.hpp"
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 PropertyGUI::PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene) {
 
@@ -27,8 +29,20 @@ PropertyGUI::~PropertyGUI() {
 void PropertyGUI::DrawBonePropertyWindow(std::vector<Bone>& bones, int index) {
 	bool open = true;
 
-	ImGui::Begin(bones[index].name.c_str(), &open, 0);
-	ImGui::Text("Something");
+	ImGui::Begin(bones[index].name.c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Text("Current pose");
+	ImGui::BeginChildFrame(1, ImVec2(200, 100), 0);
+	ImGui::Spacing();
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			ImGui::SameLine();
+			std::stringstream ss;
+			ss << std::setw(5) << std::fixed << std::setprecision(2) << bones[index].transformation[j][i];
+			ImGui::Text(ss.str().c_str());
+		}
+		ImGui::Spacing();
+	}
+	ImGui::EndChildFrame();
 	ImGui::End();
 
 	this->displayProperties[index] = open;
