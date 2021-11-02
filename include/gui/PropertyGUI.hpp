@@ -10,16 +10,29 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileBrowser.h"
 
+#include <map>
+
 #include "Scene.hpp"
 
 class PropertyGUI {
+
+	enum DisplayableWindows {
+		ARMATURE,
+		HELP
+	};
+
 private:
+	std::map <DisplayableWindows, bool> shouldDisplay;
 	std::vector<bool> displayProperties;
 	Scene* scene;
 
 protected:
+
 	void DrawBonePropertyWindow(std::vector<Bone>& bones, int index);
 	void RenderBoneTree(std::vector<Bone>& bones, int boneIndex);
+	void DrawArmatureWindow();
+	void DrawHelpWindow();
+	void DrawMenuBar();
 
 public:
 	PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene);
