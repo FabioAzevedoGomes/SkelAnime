@@ -1,7 +1,8 @@
 #include "PropertyGUI.hpp"
 
 
-#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <iostream>
 #include <sstream>
@@ -36,10 +37,9 @@ PropertyGUI::~PropertyGUI() {
 void PropertyGUI::DrawBonePropertyWindow(std::vector<Bone>& bones, int index) {
 	bool open = true;
 
-	ImGui::Begin(bones[index].name.c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin(("Properties of " + bones[index].name).c_str(), &open, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Current pose");
-	ImGui::BeginChildFrame(1, ImVec2(200, 100), 0);
-	ImGui::Spacing();
+	ImGui::BeginChildFrame(2, ImVec2(200, 75), 0);
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			ImGui::SameLine();
@@ -51,8 +51,37 @@ void PropertyGUI::DrawBonePropertyWindow(std::vector<Bone>& bones, int index) {
 	}
 	ImGui::EndChildFrame();
 
-	ImGui::End();
+	glm::vec3 scale, translation, skew;
+	glm::vec4 perspective;
+	glm::quat rotation;
+	glm::decompose(bones[index].transformation, scale, rotation, translation, skew, perspective);
+	glm::vec3 eulerRotation = glm::eulerAngles(glm::conjugate(rotation));
 
+	if (ImGui::CollapsingHeader("Translation", 0)) {
+		ImGui::Text(glm::to_string(translation).c_str());
+		ImGui::InputFloat("Translation X", &translation.x, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Translation Y", &translation.y, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Translation Z", &translation.z, 0.01f, 0.1f, "%f", 0);
+		ImGui::Spacing();
+	}
+
+	if (ImGui::CollapsingHeader("Rotation", 0)) {
+		ImGui::Text(glm::to_string(eulerRotation).c_str());
+		ImGui::InputFloat("Rotation X", &eulerRotation.x, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Rotation Y", &eulerRotation.y, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Rotation Z", &eulerRotation.z, 0.01f, 0.1f, "%f", 0);
+		ImGui::Spacing();
+	}
+
+	if (ImGui::CollapsingHeader("Scale", 0)) {
+		ImGui::Text(glm::to_string(scale).c_str());
+		ImGui::InputFloat("Scale X", &scale.x, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Scale Y", &scale.y, 0.01f, 0.1f, "%f", 0);
+		ImGui::InputFloat("Scale Z", &scale.z, 0.01f, 0.1f, "%f", 0);
+		ImGui::Spacing();
+	}
+
+	ImGui::End();
 	this->displayProperties[index] = open;
 }
 
