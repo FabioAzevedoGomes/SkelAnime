@@ -2,54 +2,78 @@
 
 #include "Scene.hpp"
 
-Mesh Scene::CreateMesh(aiMesh* mesh, const aiScene* model) {
-	std::vector<Vertex> meshVertices;
-	std::vector<unsigned int> indices;
-
+void Scene::AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices) {
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex;
-		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
 		if (mesh->HasNormals()) {
-			vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+			vertex.normal = glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
 		}
-		vertex.color = glm::vec3(26.0f / 255.0f, 228.0f / 255.0f, 235.0f / 255.0f);
-		meshVertices.push_back(vertex);
-		this->totalVertices++;
+		vertex.color = glm::vec4(26.0f / 255.0f, 228.0f / 255.0f, 235.0f / 255.0f, 255.0f);
+		for (int j = 0; j < MAX_INFLUENCING_BONES; j++) {
+			vertex.boneIds[j] = -1;
+			vertex.boneWeights[j] = 0;
+		}
+		vertices.push_back(vertex);
 	}
-
-	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-	{
-		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < face.mNumIndices; j++)
-			indices.push_back(face.mIndices[j]);
-	}
-
-	return Mesh(meshVertices, indices);
 }
 
-void Scene::ProcessNodesRecursively(aiNode* node) {
+void Scene::ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices) {
+	if (node != nullptr) {
 
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = model->mMeshes[node->mMeshes[i]];
-		this->meshes.push_back(CreateMesh(mesh, model));
+		for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+			aiMesh* mesh = model->mMeshes[node->mMeshes[i]];
+			AddMeshVertices(mesh, model, vertices);
+		}
+
+		for (unsigned int i = 0; i < node->mNumChildren; i++) {
+			ProcessModelNodesRecursively(node->mChildren[i], model, vertices);
+		}
 	}
+}
+
+glm::mat4 getGlmMatrixFromAiMatrix(aiMatrix4x4 matrix) {
+
+	glm::mat4 result;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			result[i][j] = matrix[j][i];
+		}
+	}
+	return result;
+}
+
+void Scene::ProcessSkeletonNodesRecursively(Skeleton* skeleton, aiNode* node, std::map<std::string, int>& nameToIndexMap) {
+
+	int parentPosition = -1;
+	if (node->mParent != nullptr) {
+		parentPosition = nameToIndexMap[node->mParent->mName.C_Str()];
+	}
+	skeleton->AddBone(parentPosition, getGlmMatrixFromAiMatrix(node->mTransformation), node->mName.C_Str());
+	nameToIndexMap.insert({ (std::string)node->mName.C_Str(), skeleton->GetNumberOfBones() - 1 });
 
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		ProcessNodesRecursively(node->mChildren[i]);
+		ProcessSkeletonNodesRecursively(skeleton, node->mChildren[i], nameToIndexMap);
 	}
 }
 
-Scene::Scene(const aiScene* model) {
-	this->model = model;
+Scene::Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair) {
 	this->camera = new Camera();
-	this->totalVertices = 0;
-	ProcessNodesRecursively(model->mRootNode);
+	Skeleton skeleton;
+	std::vector<Vertex> vertices;
+
+	ProcessSkeletonNodesRecursively(&skeleton, skeletonModelPair.first->mRootNode, std::map<std::string, int>());
+	ProcessModelNodesRecursively(skeletonModelPair.second->mRootNode, skeletonModelPair.second, vertices);
+
+	this->model = new Model(skeleton, vertices);
+	//this->model->PrintSkeleton();
+	//this->model->PrintVertices();
 }
 
 Scene::~Scene() {
 }
 
-const aiScene* Scene::GetModel() {
+Model* Scene::GetModel() {
 	return this->model;
 }
 
@@ -58,55 +82,17 @@ Camera* Scene::GetCamera() {
 }
 
 long Scene::GetVertexCount() {
-	return this->totalVertices;
+	return this->model->GetVertexCount();
 }
 
 float* Scene::GetVertexPositionInformation() {
-	float* positionInformation = new float[GetVertexCount() * 3];
-
-	int index = 0;
-	for (auto i = this->meshes.begin(); i != this->meshes.end(); i++) {
-		for (auto j = i->vertices.begin(); j != i->vertices.end(); j++) {
-			positionInformation[index + 0] = j->position.x;
-			positionInformation[index + 1] = j->position.y;
-			positionInformation[index + 2] = j->position.z;
-			//std::cout << "vertex " << index / 3.0f << ": " << positionInformation[index + 0] << ", " << positionInformation[index + 1] << ", " << positionInformation[index + 2] << std::endl;
-			index += 3;
-		}
-	}
-
-	return positionInformation;
+	return this->model->GetVertexPositionInformation();
 }
 
 float* Scene::GetVertexNormalInformation() {
-	float* normalInformation = new float[GetVertexCount() * 3];
-
-	int index = 0;
-	for (auto i = this->meshes.begin(); i != this->meshes.end(); i++) {
-		for (auto j = i->vertices.begin(); j != i->vertices.end(); j++) {
-			normalInformation[index + 0] = j->normal.x;
-			normalInformation[index + 1] = j->normal.y;
-			normalInformation[index + 2] = j->normal.z;
-			index += 3;
-		}
-	}
-
-	return normalInformation;
-
+	return this->model->GetVertexNormalInformation();
 }
 
 float* Scene::GetVertexColorInformation() {
-	float* colorInformation = new float[GetVertexCount() * 3];
-
-	int index = 0;
-	for (auto i = this->meshes.begin(); i != this->meshes.end(); i++) {
-		for (auto j = i->vertices.begin(); j != i->vertices.end(); j++) {
-			colorInformation[index + 0] = j->color.x;
-			colorInformation[index + 1] = j->color.y;
-			colorInformation[index + 2] = j->color.z;
-			index += 3;
-		}
-	}
-
-	return colorInformation;
+	return this->model->GetVertexColorInformation();
 }

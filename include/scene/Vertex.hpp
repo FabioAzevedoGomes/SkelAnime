@@ -1,12 +1,16 @@
 #ifndef SKELANIME_VERTEX_HPP
 #define SKELANIME_VERTEX_HPP
 
-#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
-typedef struct {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec3 color;
+#define MAX_INFLUENCING_BONES 4
+
+typedef struct vertex_t {
+	glm::vec4 position;
+	glm::vec4 normal;
+	glm::vec4 color;
+	int boneIds[MAX_INFLUENCING_BONES];
+	float boneWeights[MAX_INFLUENCING_BONES];
 } Vertex;
 
 #endif // SKELANIME_VERTEX_HPP
