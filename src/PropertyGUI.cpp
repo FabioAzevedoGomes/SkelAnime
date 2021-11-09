@@ -55,7 +55,7 @@ void PropertyGUI::DrawBonePropertyWindow(std::vector<Bone>& bones, int index) {
 	glm::vec4 perspective;
 	glm::quat rotation;
 	glm::decompose(bones[index].transformation, scale, rotation, translation, skew, perspective);
-	glm::vec3 eulerRotation = glm::eulerAngles(glm::conjugate(rotation));
+	glm::vec3 eulerRotation = glm::eulerAngles(rotation);
 
 	if (ImGui::CollapsingHeader("Translation", 0)) {
 		ImGui::Text(glm::to_string(translation).c_str());
@@ -80,6 +80,12 @@ void PropertyGUI::DrawBonePropertyWindow(std::vector<Bone>& bones, int index) {
 		ImGui::InputFloat("Scale Z", &scale.z, 0.01f, 0.1f, "%f", 0);
 		ImGui::Spacing();
 	}
+
+	glm::mat4 transformation(1.0f);
+	rotation = glm::quat(eulerRotation);
+
+	bones[index].transformation = glm::scale(glm::toMat4(rotation) * transformation, scale);
+	bones[index].transformation[3] = glm::vec4(translation, 1.0f); // glm::translate was doing something weird idk
 
 	ImGui::End();
 	this->displayProperties[index] = open;
@@ -120,7 +126,7 @@ void PropertyGUI::DrawArmatureWindow() {
 	std::vector<Bone>& bones = this->scene->GetModel()->GetSkeleton()->GetBones();
 
 	bool p_open = true;
-	ImGui::Begin("Armature", &p_open, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Model Armature", &p_open, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::BeginChildFrame(1, ImVec2(300, 60), 0);
 	ImGui::TextWrapped("This window contains the armature's bone hierarchy. Expand the tree below by clicking the arrows or manipulate each bone's properties by clicking it's name.");
 	ImGui::EndChildFrame();
@@ -140,7 +146,7 @@ void PropertyGUI::DrawHelpWindow() {
 	ImGui::Begin("Help", &p_open, ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::Text("Controls");
 	ImGui::BulletText("Move camera with \'W\', \'A\', \'S\', \'D\'");
-	ImGui::BulletText("Lock/unlock mouse with \'1\'");
+	ImGui::BulletText("Lock/unlock mouse with \'F1\'");
 	ImGui::BulletText("Quit application with \'ESC\' or by closing the window");
 	ImGui::End();
 
