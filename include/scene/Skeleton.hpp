@@ -19,6 +19,10 @@ public:
 	void PrintBone(int index);
 	void AddBone(int parent, glm::mat4 transformation, std::string name);
 	void RotateBone(int bone, glm::quat rotation);
+
+	float* GetVertexPositionInformation();
+	float* GetVertexNormalInformation();
+	float* GetVertexColorInformation();
 };
 
 #endif // SKELANIME_SKELETON_HPP

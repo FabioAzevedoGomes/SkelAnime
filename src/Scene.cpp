@@ -1,6 +1,18 @@
 #include <iostream>
+#include <iomanip>
 
 #include "Scene.hpp"
+
+void prettyPrintMatrix(glm::mat4 matrix) {
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			std::cout << std::setw(7) << std::fixed << std::setprecision(7) << matrix[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
 
 void Scene::AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices) {
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
@@ -32,7 +44,7 @@ void Scene::ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std
 	}
 }
 
-glm::mat4 getGlmMatrixFromAiMatrix(aiMatrix4x4 matrix) {
+glm::mat4 getGlmMatrixFromAiMatrix(aiMatrix4x4 matrix, std::string name) {
 
 	glm::mat4 result;
 	for (int i = 0; i < 4; i++) {
@@ -40,6 +52,7 @@ glm::mat4 getGlmMatrixFromAiMatrix(aiMatrix4x4 matrix) {
 			result[i][j] = matrix[j][i];
 		}
 	}
+
 	return result;
 }
 
@@ -49,7 +62,7 @@ void Scene::ProcessSkeletonNodesRecursively(Skeleton* skeleton, aiNode* node, st
 	if (node->mParent != nullptr) {
 		parentPosition = nameToIndexMap[node->mParent->mName.C_Str()];
 	}
-	skeleton->AddBone(parentPosition, getGlmMatrixFromAiMatrix(node->mTransformation), node->mName.C_Str());
+	skeleton->AddBone(parentPosition, getGlmMatrixFromAiMatrix(node->mTransformation, node->mName.C_Str()), node->mName.C_Str());
 	nameToIndexMap.insert({ (std::string)node->mName.C_Str(), skeleton->GetNumberOfBones() - 1 });
 
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {

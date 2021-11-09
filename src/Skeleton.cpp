@@ -1,5 +1,6 @@
 #include "Skeleton.hpp"
 
+#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
@@ -46,4 +47,76 @@ void Skeleton::AddBone(int parent, glm::mat4 transformation, std::string name) {
 
 void Skeleton::RotateBone(int bone, glm::quat rotation) {
 
+}
+
+
+float* Skeleton::GetVertexPositionInformation() {
+	float* positionInformation = new float[GetNumberOfBones() * 6];
+
+	memset(positionInformation, 0.0f, GetNumberOfBones() * 6);
+
+	int index = 0;
+	glm::vec3 translation, skew, scale;
+	glm::vec4 perspective;
+	glm::quat rotation;
+	for (int i = 0; i < GetNumberOfBones(); i++) {
+		if (this->bones[i].parent != -1) {
+
+			glm::mat4 transform(1.0f);
+			int parent = this->bones[i].parent;
+			do {
+				transform = this->bones[parent].transformation * transform;
+				parent = this->bones[parent].parent;
+			} while (parent != -1);
+
+			glm::decompose(transform, scale, rotation, translation, skew, perspective);
+
+			*(positionInformation + index + 0) = (float)translation.x;
+			*(positionInformation + index + 1) = (float)translation.y;
+			*(positionInformation + index + 2) = (float)translation.z;
+
+			transform = glm::mat4(1.0f);
+
+			parent = i;
+			do {
+				transform = this->bones[parent].transformation * transform;
+				parent = this->bones[parent].parent;
+			} while (parent != -1);
+
+			glm::decompose(transform, scale, rotation, translation, skew, perspective);
+
+
+			*(positionInformation + index + 3) = (float)translation.x;
+			*(positionInformation + index + 4) = (float)translation.y;
+			*(positionInformation + index + 5) = (float)translation.z;
+		}
+		else {
+			glm::decompose(this->bones[i].transformation, scale, rotation, translation, skew, perspective);
+			*(positionInformation + index + 0) = translation.x;
+			*(positionInformation + index + 1) = translation.y;
+			*(positionInformation + index + 2) = translation.z;
+			*(positionInformation + index + 3) = translation.x;
+			*(positionInformation + index + 4) = translation.y;
+			*(positionInformation + index + 5) = translation.z;
+		}
+		index += 6;
+	}
+
+	return positionInformation;
+}
+
+float* Skeleton::GetVertexNormalInformation() {
+	float* normalInformation = new float[GetNumberOfBones() * 6];
+
+	memset(normalInformation, 1.0f, GetNumberOfBones() * 6);
+
+	return normalInformation;
+}
+
+float* Skeleton::GetVertexColorInformation() {
+	float* colorInformation = new float[GetNumberOfBones() * 6];
+
+	memset(colorInformation, 1.0f, GetNumberOfBones() * 6);
+
+	return colorInformation;
 }

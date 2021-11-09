@@ -7,6 +7,7 @@ layout(location=2)in vec3 vertexNormal;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
+uniform int object;
 
 out vec4 interpolatedColor;
 
@@ -24,6 +25,9 @@ vec4 gouraud(vec3 diffuse, vec3 ambient) {
 }
 
 void main() {
-    interpolatedColor = gouraud(vertexColor, vec3(1.0, 1.0, 1.0));
+    if (object == 0)
+        interpolatedColor = gouraud(vertexColor, vec3(1.0, 1.0, 1.0));
+    else
+        interpolatedColor = vec4(1.0, 1.0, 1.0, 1.0);
     gl_Position = proj * view * model * vec4(vertexPosition, 1.0);
 }
