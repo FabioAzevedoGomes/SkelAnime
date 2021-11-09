@@ -13,20 +13,24 @@
 #include "Scene.hpp"
 
 enum Attribute_IDs {
-	vertexPosition,
-	vertexColor,
-	vertexNormal
+	modelVertexPosition,
+	modelVertexColor,
+	modelVertexNormal
 };
 
 enum Buffer_IDs {
-	Vertex_Position_Buffer,
-	Vertex_Normal_Buffer,
-	Vertex_Color_Buffer,
+	Model_Vertex_Position_Buffer,
+	Model_Vertex_Normal_Buffer,
+	Model_Vertex_Color_Buffer,
+	Bone_Vertex_Position_Buffer,
+	Bone_Vertex_Normal_Buffer,
+	Bone_Vertex_Color_Buffer,
 	Buffer_Count
 };
 
 enum VAO_IDs {
 	Model_VAO,
+	Bone_VAO,
 	VAO_Count
 };
 
@@ -39,6 +43,7 @@ private:
 	static GLuint modelUniformId;
 	static GLuint viewUniformId;
 	static GLuint projUniformId;
+	static GLuint objectUniformId;
 
 	static GLuint buffers[Buffer_Count];
 	static GLuint vaos[VAO_Count];

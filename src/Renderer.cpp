@@ -6,6 +6,7 @@
 GLuint Renderer::modelUniformId;
 GLuint Renderer::viewUniformId;
 GLuint Renderer::projUniformId;
+GLuint Renderer::objectUniformId;
 GLuint Renderer::buffers[Buffer_Count];
 GLuint Renderer::vaos[VAO_Count];
 
@@ -91,38 +92,80 @@ void Renderer::SetupShaders() {
 	Renderer::modelUniformId = glGetUniformLocation(program, "model");
 	Renderer::viewUniformId = glGetUniformLocation(program, "view");
 	Renderer::projUniformId = glGetUniformLocation(program, "proj");
+	Renderer::objectUniformId = glGetUniformLocation(program, "object");
 }
+
+bool once = false;
 
 void Renderer::SetupBuffers(Scene* scene) {
 	glGenVertexArrays(VAO_Count, vaos);
 	glBindVertexArray(vaos[Model_VAO]);
 	glCreateBuffers(Buffer_Count, buffers);
 
-	void* position = scene->GetVertexPositionInformation();
-	void* normal = scene->GetVertexNormalInformation();
-	void* color = scene->GetVertexColorInformation();
+	void* modelPosition = scene->GetVertexPositionInformation();
+	void* modelNormal = scene->GetVertexNormalInformation();
+	void* modelColor = scene->GetVertexColorInformation();
+	Skeleton* modelSkeleton = scene->GetModel()->GetSkeleton();
+	float* bonePosition = modelSkeleton->GetVertexPositionInformation();
+	void* boneNormal = modelSkeleton->GetVertexNormalInformation();
+	void* boneColor = modelSkeleton->GetVertexColorInformation();
 
-	// Position
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[Vertex_Position_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), position, GL_DYNAMIC_STORAGE_BIT);
-	glVertexAttribPointer(vertexPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vertexPosition);
+	// Model Position
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Model_Vertex_Position_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), modelPosition, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexPosition);
 
-	// Colors
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[Vertex_Color_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), color, GL_DYNAMIC_STORAGE_BIT);
-	glVertexAttribPointer(vertexColor, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vertexColor);
+	// Model Colors
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Model_Vertex_Color_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), modelColor, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexColor, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexColor);
 
-	// Normals
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[Vertex_Normal_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), normal, GL_DYNAMIC_STORAGE_BIT);
-	glVertexAttribPointer(vertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vertexNormal);
+	// Model Normals
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Model_Vertex_Normal_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), modelNormal, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexNormal);
 
-	free(position);
-	free(normal);
-	free(color);
+	glBindVertexArray(vaos[Bone_VAO]);
+
+	// Bone Position
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Bone_Vertex_Position_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, modelSkeleton->GetNumberOfBones() * 6l * sizeof(float), bonePosition, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexPosition);
+
+	// Bone Colors
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Bone_Vertex_Color_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, modelSkeleton->GetNumberOfBones() * 6l * sizeof(float), boneColor, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexColor, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexColor);
+
+	// Bone Normals
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Bone_Vertex_Position_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, modelSkeleton->GetNumberOfBones() * 6l * sizeof(float), boneNormal, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glEnableVertexAttribArray(modelVertexNormal);
+
+	if (once) {
+		std::cout << "Pos: " << std::endl;
+		for (int i = 0; i < modelSkeleton->GetNumberOfBones() * 6; i += 6) {
+			std::cout << "Bone " << modelSkeleton->GetBones()[i / 6].name << std::endl;
+			std::cout << bonePosition[i] << ", " << bonePosition[i + 1] << ", " << bonePosition[i + 2] << std::endl;
+			std::cout << bonePosition[i + 3] << ", " << bonePosition[i + 4] << ", " << bonePosition[i + 5] << std::endl;
+			std::cout << std::endl;
+		}
+		once = false;
+		std::cout << "Total bones: " << modelSkeleton->GetNumberOfBones();
+	}
+
+	free(modelPosition);
+	free(modelNormal);
+	free(modelColor);
+	free(bonePosition);
+	free(boneNormal);
+	free(boneColor);
 }
 
 void Renderer::Setup(Scene* scene) {
@@ -131,6 +174,8 @@ void Renderer::Setup(Scene* scene) {
 };
 
 void Renderer::RenderScene(Scene* scene) {
+
+	SetupBuffers(scene);
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -141,8 +186,14 @@ void Renderer::RenderScene(Scene* scene) {
 	glUniformMatrix4fv(projUniformId, 1, GL_FALSE, glm::value_ptr(scene->GetCamera()->GetProjectionMatrix()));
 	glUniformMatrix4fv(viewUniformId, 1, GL_FALSE, glm::value_ptr(scene->GetCamera()->GetViewMatrix()));
 
+	glUniform1i(objectUniformId, 0);
 	glBindVertexArray(vaos[Model_VAO]);
 	glDrawArrays(GL_TRIANGLES, 0, scene->GetVertexCount());
 	glBindVertexArray(0);
 
+	glUniform1i(objectUniformId, 1);
+	glBindVertexArray(vaos[Bone_VAO]);
+	glLineWidth((GLfloat)2.0f);
+	glDrawArrays(GL_LINES, 0, 2 * scene->GetModel()->GetSkeleton()->GetNumberOfBones());
+	glBindVertexArray(0);
 };

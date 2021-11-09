@@ -6,6 +6,7 @@
 
 #include "Window.hpp"
 #include "Renderer.hpp"
+#include "PropertyGUI.hpp"
 
 Assimp::Importer modelImporter;
 Assimp::Importer skeletonImporter;
@@ -38,10 +39,12 @@ int main(int argc, char** argv) {
 
 	Window window;
 	Scene* scene = new Scene(LoadModelsFromFiles(argv[1], argv[2]));
+	PropertyGUI propertyInterface(window.GetWindow(), scene);
 	Renderer::Setup(scene);
 
 	while (!window.ShouldClose()) {
 		window.RenderScene(scene);
+		propertyInterface.Draw();
 		window.Refresh();
 	}
 

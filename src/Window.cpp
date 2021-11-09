@@ -11,6 +11,8 @@ Window::Window(const char* title, int width, int height) {
 	this->height = height;
 	this->activeScene = nullptr;
 	this->previousCursorPosition = glm::vec2(0.0f, 0.0f);
+	this->captureMouse = false;
+	memset(pressed, false, GLFW_KEY_MENU);
 
 	auto resizeCallbackFunction = [](GLFWwindow* window, int width, int height) {
 		Window* myWindow =
@@ -35,7 +37,7 @@ Window::Window(const char* title, int width, int height) {
 	glfwSetWindowSizeCallback(window, resizeCallbackFunction);
 	glfwSetCursorPosCallback(window, cursorPosCallbackFunction);
 	glfwSetKeyCallback(window, keyCallbackFunction);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 Window::~Window() {
@@ -44,6 +46,10 @@ Window::~Window() {
 }
 
 bool Window::ShouldClose() { return glfwWindowShouldClose(window); }
+
+GLFWwindow* Window::GetWindow() {
+	return this->window;
+}
 
 void Window::Refresh() {
 	glfwSwapBuffers(window);

@@ -17,6 +17,7 @@ public:
 	void PrintSkeleton();
 	void PrintVertices();
 
+	Skeleton* GetSkeleton();
 	long GetVertexCount();
 	float* GetVertexPositionInformation();
 	float* GetVertexNormalInformation();
