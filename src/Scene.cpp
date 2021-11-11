@@ -1,7 +1,11 @@
 #include <iostream>
 #include <iomanip>
 
+#include <glm/gtx/closest_point.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include "Scene.hpp"
+
+#define BIG_NUMBER 9999999.0f
 
 void prettyPrintMatrix(glm::mat4 matrix) {
 
@@ -14,7 +18,49 @@ void prettyPrintMatrix(glm::mat4 matrix) {
 	std::cout << std::endl;
 }
 
-void Scene::AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices) {
+glm::vec3 getClosestPoint(glm::vec3 point, glm::vec3 segmentStart, glm::vec3 segmentEnd) {
+	return glm::closestPointOnLine(point, segmentStart, segmentEnd);
+}
+
+int getClosestBone(Skeleton& skeleton, Vertex& vertex) {
+	int closest_bone = -1;
+	float closest_dist = BIG_NUMBER;
+
+	glm::vec3 translation1, translation2, skew, scale;
+	glm::vec4 perspective;
+	glm::quat rotation;
+	for (int i = 0; i < skeleton.GetNumberOfBones(); i++) {
+		float dist = BIG_NUMBER;
+		glm::decompose(skeleton.GetBones()[i].cumulativeTransformation, scale, rotation, translation1, skew, perspective);
+
+		glm::vec3 closestPoint = translation1;
+
+		if (skeleton.GetBones()[i].parent != -1) {
+			glm::decompose(skeleton.GetBones()[skeleton.GetBones()[i].parent].cumulativeTransformation, scale, rotation, translation2, skew, perspective);
+			closestPoint = getClosestPoint(vertex.position, translation1, translation2);
+			dist = glm::distance(closestPoint, glm::vec3(vertex.position));
+		}
+		else {
+			dist = glm::distance(vertex.position, glm::vec4(translation1, 1.0f));
+		}
+
+		if (dist < closest_dist
+			&& strcmp(skeleton.GetBones()[i].name.c_str(), "Armature")
+			&& strcmp(skeleton.GetBones()[i].name.c_str(), "RootNode")
+			) {
+			closest_bone = i;
+			closest_dist = dist;
+		}
+	}
+
+	return closest_bone == -1 ? 0 : closest_bone;
+}
+
+glm::vec4 computeRelativeVertexPosition(Bone& bone, glm::vec4 vertexPos) {
+	return glm::inverse(bone.cumulativeTransformation) * vertexPos;
+}
+
+void Scene::AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices, Skeleton& skeleton) {
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex;
 		vertex.position = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 1.0f);
@@ -22,24 +68,31 @@ void Scene::AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vert
 			vertex.normal = glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0.0f);
 		}
 		vertex.color = glm::vec4(26.0f / 255.0f, 228.0f / 255.0f, 235.0f / 255.0f, 255.0f);
+
 		for (int j = 0; j < MAX_INFLUENCING_BONES; j++) {
-			vertex.boneIds[j] = -1;
-			vertex.boneWeights[j] = 0;
+			vertex.boneIds[j] = getClosestBone(skeleton, vertex);
+			vertex.boneWeights[j] = 1;
+			glm::vec4 relativePos = computeRelativeVertexPosition(skeleton.GetBones()[vertex.boneIds[j]], vertex.position);
+			vertex.relativePositions[4 * j + 0] = relativePos.x;
+			vertex.relativePositions[4 * j + 1] = relativePos.y;
+			vertex.relativePositions[4 * j + 2] = relativePos.z;
+			vertex.relativePositions[4 * j + 3] = relativePos.w;
 		}
+
 		vertices.push_back(vertex);
 	}
 }
 
-void Scene::ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices) {
+void Scene::ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices, Skeleton& skeleton) {
 	if (node != nullptr) {
 
 		for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 			aiMesh* mesh = model->mMeshes[node->mMeshes[i]];
-			AddMeshVertices(mesh, model, vertices);
+			AddMeshVertices(mesh, model, vertices, skeleton);
 		}
 
 		for (unsigned int i = 0; i < node->mNumChildren; i++) {
-			ProcessModelNodesRecursively(node->mChildren[i], model, vertices);
+			ProcessModelNodesRecursively(node->mChildren[i], model, vertices, skeleton);
 		}
 	}
 }
@@ -76,7 +129,7 @@ Scene::Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair) {
 	std::vector<Vertex> vertices;
 
 	ProcessSkeletonNodesRecursively(&skeleton, skeletonModelPair.first->mRootNode, std::map<std::string, int>());
-	ProcessModelNodesRecursively(skeletonModelPair.second->mRootNode, skeletonModelPair.second, vertices);
+	ProcessModelNodesRecursively(skeletonModelPair.second->mRootNode, skeletonModelPair.second, vertices, skeleton);
 
 	this->model = new Model(skeleton, vertices);
 }
@@ -97,7 +150,7 @@ long Scene::GetVertexCount() {
 }
 
 float* Scene::GetVertexPositionInformation() {
-	return this->model->GetVertexPositionInformation();
+	return this->model->GetVertexRelativePositionInformation();
 }
 
 float* Scene::GetVertexNormalInformation() {

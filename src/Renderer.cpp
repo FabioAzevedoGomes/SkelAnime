@@ -187,11 +187,13 @@ void Renderer::RenderScene(Scene* scene) {
 	glUniformMatrix4fv(viewUniformId, 1, GL_FALSE, glm::value_ptr(scene->GetCamera()->GetViewMatrix()));
 
 	glUniform1i(objectUniformId, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(vaos[Model_VAO]);
 	glDrawArrays(GL_TRIANGLES, 0, scene->GetVertexCount());
 	glBindVertexArray(0);
 
 	glUniform1i(objectUniformId, 1);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(vaos[Bone_VAO]);
 	glLineWidth((GLfloat)2.0f);
 	glDrawArrays(GL_LINES, 0, 2 * scene->GetModel()->GetSkeleton()->GetNumberOfBones());

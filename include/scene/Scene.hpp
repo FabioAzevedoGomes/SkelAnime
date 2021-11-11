@@ -19,9 +19,9 @@ private:
 	Camera* camera;
 
 protected:
-	void AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices);
+	void AddMeshVertices(aiMesh* mesh, const aiScene* model, std::vector<Vertex>& vertices, Skeleton& skeleton);
 	void ProcessSkeletonNodesRecursively(Skeleton* skeleton, aiNode* node, std::map<std::string, int>& nameToPositionMap);
-	void ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices);
+	void ProcessModelNodesRecursively(aiNode* node, const aiScene* model, std::vector<Vertex>& vertices, Skeleton& skeleton);
 
 public:
 	Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair);

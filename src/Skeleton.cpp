@@ -39,16 +39,22 @@ void Skeleton::AddBone(int parent, glm::mat4 transformation, std::string name) {
 	bone.transformation = transformation;
 	bone.parent = parent;
 	bone.name = name;
+	glm::mat4 transform = transformation;
+
+	if (parent >= 0 && parent <= this->bones.size() - 1) {
+		int iterationParent = parent;
+		do {
+			transform = this->bones[iterationParent].transformation * transform;
+			iterationParent = this->bones[iterationParent].parent;
+		} while (iterationParent != -1);
+	}
+	bone.cumulativeTransformation = transform;
+
 	this->bones.push_back(bone);
 	if (parent >= 0 && parent <= this->bones.size() - 1) {
 		this->bones[parent].children.push_back(this->bones.size() - 1);
 	}
 }
-
-void Skeleton::RotateBone(int bone, glm::quat rotation) {
-
-}
-
 
 float* Skeleton::GetVertexPositionInformation() {
 	float* positionInformation = new float[GetNumberOfBones() * 6];
@@ -61,7 +67,6 @@ float* Skeleton::GetVertexPositionInformation() {
 	glm::quat rotation;
 	for (int i = 0; i < GetNumberOfBones(); i++) {
 		if (this->bones[i].parent != -1) {
-
 			glm::mat4 transform(1.0f);
 			int parent = this->bones[i].parent;
 			do {
