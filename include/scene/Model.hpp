@@ -19,6 +19,7 @@ public:
 
 	Skeleton* GetSkeleton();
 	long GetVertexCount();
+	float* GetVertexRelativePositionInformation();
 	float* GetVertexPositionInformation();
 	float* GetVertexNormalInformation();
 	float* GetVertexColorInformation();

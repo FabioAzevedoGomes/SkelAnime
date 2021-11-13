@@ -6,6 +6,7 @@
 
 typedef struct bone_t {
 	glm::mat4 transformation;
+	glm::mat4 cumulativeTransformation;
 	int parent;
 	std::vector<int> children;
 	std::string name;
