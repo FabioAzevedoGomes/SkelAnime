@@ -32,8 +32,13 @@ void Model::PrintVertices() {
 	}
 }
 
-Skeleton* Model::GetSkeleton() {
+Skeleton* Model::GetRestSkeleton()
+{
 	return &this->restSkeleton;
+}
+
+Skeleton* Model::GetSkeleton() {
+	return &this->skeleton;
 }
 
 long Model::GetVertexCount() {
@@ -59,6 +64,8 @@ float* Model::GetVertexRelativePositionInformation() {
 	float* positionInformation = new float[GetVertexCount() * 3];
 
 	std::vector<glm::mat4> transformations = calculateCummulativeTransforms(this->GetSkeleton()->GetBones());
+
+	// todo : PASSAR PRO SHADER
 
 	int index = 0;
 	for (int i = 0; i < GetVertexCount(); i++) {
@@ -116,4 +123,9 @@ float* Model::GetVertexColorInformation() {
 	}
 
 	return colorInformation;
+}
+
+void Model::LoadSkeleton(Skeleton* s)
+{
+	this->skeleton = *s;
 }

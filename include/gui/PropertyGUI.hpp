@@ -18,7 +18,8 @@ class PropertyGUI {
 
 	enum DisplayableWindows {
 		ARMATURE,
-		HELP
+		HELP,
+		FILES
 	};
 
 private:
@@ -32,6 +33,7 @@ protected:
 	void RenderBoneTree(std::vector<Bone>& bones, int boneIndex);
 	void DrawArmatureWindow();
 	void DrawHelpWindow();
+	void DrawFileWindow();
 	void DrawMenuBar();
 
 public:

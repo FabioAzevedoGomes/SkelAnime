@@ -8,6 +8,8 @@
 #include <sstream>
 #include <iomanip>
 
+imgui_addons::ImGuiFileBrowser fileDialog;
+
 PropertyGUI::PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene) {
 
 	this->scene = scene;
@@ -26,6 +28,7 @@ PropertyGUI::PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene) {
 	this->shouldDisplay = std::map<DisplayableWindows, bool>();
 	shouldDisplay[DisplayableWindows::ARMATURE] = false;
 	shouldDisplay[DisplayableWindows::HELP] = true;
+	shouldDisplay[DisplayableWindows::FILES] = false;
 }
 
 PropertyGUI::~PropertyGUI() {
@@ -153,6 +156,30 @@ void PropertyGUI::DrawHelpWindow() {
 	shouldDisplay[HELP] = p_open;
 }
 
+void PropertyGUI::DrawFileWindow() {
+
+	bool p_open = true;
+	ImGui::Begin("Save/Load", &p_open, ImGuiWindowFlags_AlwaysAutoResize);
+
+	if (ImGui::Button("Load Pose")) {
+		ImGui::OpenPopup("Open File");
+	}
+
+	if (fileDialog.showFileDialog("Open File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".fbx"))
+		scene->LoadPoseFromFile( fileDialog.selected_path );
+
+	if (ImGui::Button("Save Pose")) {
+		ImGui::OpenPopup("Save File");
+	}
+
+	if (fileDialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), ".fbx"))
+		scene->SavePoseToFile(fileDialog.selected_path);
+
+	ImGui::End();
+
+	shouldDisplay[FILES] = p_open;
+}
+
 void PropertyGUI::DrawMenuBar() {
 	ImGui::BeginMainMenuBar();
 
@@ -169,6 +196,12 @@ void PropertyGUI::DrawMenuBar() {
 	ImGui::MenuItem("Help", "h", &help_selected, true);
 	if (help_selected) {
 		shouldDisplay[HELP] = true;
+	}
+
+	bool files_selected = false;
+	ImGui::MenuItem("Save/Load", "h", &files_selected, true);
+	if (files_selected) {
+		shouldDisplay[FILES] = true;
 	}
 
 	ImGui::EndMainMenuBar();
@@ -188,6 +221,9 @@ void PropertyGUI::Draw() {
 
 	if (shouldDisplay[HELP])
 		DrawHelpWindow();
+
+	if (shouldDisplay[FILES])
+		DrawFileWindow();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

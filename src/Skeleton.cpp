@@ -3,6 +3,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
+#include <fstream>
 
 Skeleton::Skeleton() {
 }
@@ -124,4 +125,63 @@ float* Skeleton::GetVertexColorInformation() {
 	memset(colorInformation, 1.0f, GetNumberOfBones() * 6);
 
 	return colorInformation;
+}
+
+void customExport(Skeleton& skeleton, const std::string& path) {
+	std::ofstream output(path, std::ios::out | std::ios::binary);
+	if (!output) {
+		throw new std::runtime_error("Cannot open or create export file");
+	}
+	int boneCount = skeleton.GetNumberOfBones();
+
+	output.write((char*)&boneCount, sizeof(int));
+	for (int index = 0; index < skeleton.GetNumberOfBones(); index++) {
+		auto& bone = skeleton.GetBones()[index];
+		int num_children = bone.children.size();
+		int name_size = bone.name.length() + 1;
+
+		output.write((char*)&index, sizeof(int));
+		output.write((char*)&bone.parent, sizeof(int));
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				output.write((char*)&bone.transformation[i][j], sizeof(float));
+			}
+		}
+		output.write((char*)&name_size, sizeof(int));
+		output.write((char*)bone.name.c_str(), sizeof(char) * name_size);
+	}
+
+	output.close();
+}
+
+Skeleton customImport(const std::string& path) {
+	Skeleton s;
+
+	std::ifstream input(path, std::ios::in | std::ios::binary);
+
+	int boneCount = 0;
+	input.read((char*)&boneCount, sizeof(int));
+
+	for (int index = 0; index < boneCount; index++) {
+		int boneIndex, name_size, parent;
+
+		glm::mat4 transform(1.0f);
+		input.read((char*)&boneIndex, sizeof(int));
+		input.read((char*)&parent, sizeof(int));
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 4; j++) {
+				input.read((char*)&transform[i][j], sizeof(float));
+			}
+		}
+		input.read((char*)&name_size, sizeof(int));
+		
+		std::string name(name_size,'\0');
+		input.read((char*)name.data(), sizeof(char) * name_size);
+
+		s.AddBone(parent, transform, name);
+	}
+
+	input.close();
+
+	return s;
 }

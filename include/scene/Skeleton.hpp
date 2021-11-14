@@ -24,4 +24,7 @@ public:
 	float* GetVertexColorInformation();
 };
 
+void customExport(Skeleton& skeleton, const std::string& path);
+Skeleton customImport(const std::string& path);
+
 #endif // SKELANIME_SKELETON_HPP

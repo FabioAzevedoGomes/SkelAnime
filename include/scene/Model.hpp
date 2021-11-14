@@ -17,12 +17,15 @@ public:
 	void PrintSkeleton();
 	void PrintVertices();
 
+	Skeleton* GetRestSkeleton();
 	Skeleton* GetSkeleton();
 	long GetVertexCount();
 	float* GetVertexRelativePositionInformation();
 	float* GetVertexPositionInformation();
 	float* GetVertexNormalInformation();
 	float* GetVertexColorInformation();
+
+	void LoadSkeleton(Skeleton* s);
 };
 
 #endif // SKELANIME_MODEL_HPP

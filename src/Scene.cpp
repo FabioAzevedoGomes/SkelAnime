@@ -1,11 +1,17 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
 #include <glm/gtx/closest_point.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+
+#include <assimp/Exporter.hpp>
+
 #include "Scene.hpp"
 
 #define BIG_NUMBER 9999999.0f
+
+Assimp::Exporter skeletonExporter;
 
 void prettyPrintMatrix(glm::mat4 matrix) {
 
@@ -109,6 +115,18 @@ glm::mat4 getGlmMatrixFromAiMatrix(aiMatrix4x4 matrix, std::string name) {
 	return result;
 }
 
+aiMatrix4x4 getAiMatrixFromGlmMatrix(glm::mat4 matrix) {
+
+	aiMatrix4x4 result;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			result[i][j] = matrix[j][i];
+		}
+	}
+
+	return result;
+}
+
 void Scene::ProcessSkeletonNodesRecursively(Skeleton* skeleton, aiNode* node, std::map<std::string, int>& nameToIndexMap) {
 
 	int parentPosition = -1;
@@ -159,4 +177,46 @@ float* Scene::GetVertexNormalInformation() {
 
 float* Scene::GetVertexColorInformation() {
 	return this->model->GetVertexColorInformation();
+}
+
+void Scene::LoadPoseFromFile(const std::string& path)
+{
+	Skeleton s = customImport(path);
+	model->LoadSkeleton(&s);
+}
+
+aiNode* RecreateSkeletonNodeRecursively(Skeleton* skeleton, int currentIndex, aiNode * parent)
+{
+	auto& bone = skeleton->GetBones()[currentIndex];
+	
+	aiNode* current = new aiNode();
+	current->mName = bone.name;
+	current->mParent = parent;
+	current->mTransformation = getAiMatrixFromGlmMatrix(bone.transformation);
+
+	std::vector<aiNode*> children( bone.children.size() );
+
+	for (int i=0; i<bone.children.size(); i++)
+	{
+		children[i] = RecreateSkeletonNodeRecursively(skeleton, bone.children[i], current);
+	}
+
+	current->addChildren(children.size(), children.data());
+
+	return current;
+}
+
+void Scene::SavePoseToFile(const std::string& path)
+{
+	/*aiNode* skeletonNode = RecreateSkeletonNodeRecursively(model->GetSkeleton(), 0, nullptr);
+
+	aiScene scene;
+	scene.mRootNode = skeletonNode;
+
+	using namespace std::literals;
+
+	skeletonExporter.Export(&scene, "fbx"s, path);
+	*/
+
+	customExport(*(model->GetSkeleton()), path);
 }

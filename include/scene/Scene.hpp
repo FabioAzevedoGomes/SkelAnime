@@ -35,6 +35,8 @@ public:
 	float* GetVertexNormalInformation();
 	float* GetVertexColorInformation();
 
+	void LoadPoseFromFile(const std::string& path);
+	void SavePoseToFile(const std::string& path);
 };
 
 #endif // SKLEANIME_SCENE_HPP

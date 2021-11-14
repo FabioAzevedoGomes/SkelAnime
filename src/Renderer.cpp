@@ -196,6 +196,6 @@ void Renderer::RenderScene(Scene* scene) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glBindVertexArray(vaos[Bone_VAO]);
 	glLineWidth((GLfloat)2.0f);
-	glDrawArrays(GL_LINES, 0, 2 * scene->GetModel()->GetSkeleton()->GetNumberOfBones());
+	glDrawArrays(GL_LINES, 0, 2 * scene->GetModel()->GetRestSkeleton()->GetNumberOfBones());
 	glBindVertexArray(0);
 };
