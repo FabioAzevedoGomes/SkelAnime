@@ -15,13 +15,15 @@
 enum Attribute_IDs {
 	modelVertexPosition,
 	modelVertexColor,
-	modelVertexNormal
+	modelVertexNormal,
+	modelVertexBoneId
 };
 
 enum Buffer_IDs {
 	Model_Vertex_Position_Buffer,
 	Model_Vertex_Normal_Buffer,
 	Model_Vertex_Color_Buffer,
+	Model_Vertex_Bone_Id_Buffer,
 	Bone_Vertex_Position_Buffer,
 	Bone_Vertex_Normal_Buffer,
 	Bone_Vertex_Color_Buffer,
@@ -44,6 +46,7 @@ private:
 	static GLuint viewUniformId;
 	static GLuint projUniformId;
 	static GLuint objectUniformId;
+	static GLuint cumulativeBoneTransformsUniformId;
 
 	static GLuint buffers[Buffer_Count];
 	static GLuint vaos[VAO_Count];

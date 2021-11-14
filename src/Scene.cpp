@@ -171,6 +171,10 @@ float* Scene::GetVertexPositionInformation() {
 	return this->model->GetVertexRelativePositionInformation();
 }
 
+int* Scene::GetVertexBoneIdsInformation() {
+	return this->model->GetVertexBoneIdsInformation();
+}
+
 float* Scene::GetVertexNormalInformation() {
 	return this->model->GetVertexNormalInformation();
 }

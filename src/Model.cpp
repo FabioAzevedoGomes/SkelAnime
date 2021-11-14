@@ -45,44 +45,33 @@ long Model::GetVertexCount() {
 	return this->vertices.size();
 }
 
-std::vector<glm::mat4> calculateCummulativeTransforms(std::vector<Bone> bones) {
-	std::vector<glm::mat4> result;
-	for (int i = 0; i < bones.size(); i++) {
-		glm::mat4 transform = bones[i].transformation;
-		int parent = bones[i].parent;
-		while (parent != -1) {
-			transform = bones[parent].transformation * transform;
-			parent = bones[parent].parent;
-		}
-
-		result.push_back(transform);
-	}
-	return result;
-}
-
 float* Model::GetVertexRelativePositionInformation() {
-	float* positionInformation = new float[GetVertexCount() * 3];
-
-	std::vector<glm::mat4> transformations = calculateCummulativeTransforms(this->GetSkeleton()->GetBones());
-
-	// todo : PASSAR PRO SHADER
+	float* positionInformation = new float[GetVertexCount() * 4l];
 
 	int index = 0;
 	for (int i = 0; i < GetVertexCount(); i++) {
 		for (int j = 0; j < MAX_INFLUENCING_BONES; j++) {
-
-			glm::mat4 transform = transformations[this->vertices[i].boneIds[j]];
 			glm::vec4 relativePos = glm::vec4(this->vertices[i].relativePositions[j], this->vertices[i].relativePositions[j + 1], this->vertices[i].relativePositions[j + 2], this->vertices[i].relativePositions[j + 3]);
-			glm::vec4 finalPos = transform * relativePos * this->vertices[i].boneWeights[j];
-			positionInformation[index + 0] = finalPos.x;
-			positionInformation[index + 1] = finalPos.y;
-			positionInformation[index + 2] = finalPos.z;
+			positionInformation[index + 0] = relativePos.x;
+			positionInformation[index + 1] = relativePos.y;
+			positionInformation[index + 2] = relativePos.z;
+			positionInformation[index + 3] = relativePos.w;
 		}
-		index += 3;
+		index += 4;
 	}
 
 	return positionInformation;
 };
+
+int* Model::GetVertexBoneIdsInformation() {
+	int* boneIdInformation = new int[GetVertexCount()];
+
+	for (int i = 0; i < GetVertexCount(); i++) {
+		boneIdInformation[i] = this->vertices[i].boneIds[0];
+	}
+
+	return boneIdInformation;
+}
 
 float* Model::GetVertexPositionInformation() {
 	float* positionInformation = new float[GetVertexCount() * 3];

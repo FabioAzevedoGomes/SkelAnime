@@ -32,6 +32,7 @@ public:
 	long GetVertexCount();
 
 	float* GetVertexPositionInformation();
+	int* GetVertexBoneIdsInformation();
 	float* GetVertexNormalInformation();
 	float* GetVertexColorInformation();
 

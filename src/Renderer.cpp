@@ -1,12 +1,15 @@
 #include <iostream>
 #include "Renderer.hpp"
 
+#include <glm/matrix.hpp>
+
 #define BUFFER_OFFSET(a) ((void *)(a))
 
 GLuint Renderer::modelUniformId;
 GLuint Renderer::viewUniformId;
 GLuint Renderer::projUniformId;
 GLuint Renderer::objectUniformId;
+GLuint Renderer::cumulativeBoneTransformsUniformId;
 GLuint Renderer::buffers[Buffer_Count];
 GLuint Renderer::vaos[VAO_Count];
 
@@ -92,10 +95,9 @@ void Renderer::SetupShaders() {
 	Renderer::modelUniformId = glGetUniformLocation(program, "model");
 	Renderer::viewUniformId = glGetUniformLocation(program, "view");
 	Renderer::projUniformId = glGetUniformLocation(program, "proj");
+	Renderer::cumulativeBoneTransformsUniformId = glGetUniformLocation(program, "cumulativeBoneTransforms");
 	Renderer::objectUniformId = glGetUniformLocation(program, "object");
 }
-
-bool once = false;
 
 void Renderer::SetupBuffers(Scene* scene) {
 	glGenVertexArrays(VAO_Count, vaos);
@@ -105,6 +107,7 @@ void Renderer::SetupBuffers(Scene* scene) {
 	void* modelPosition = scene->GetVertexPositionInformation();
 	void* modelNormal = scene->GetVertexNormalInformation();
 	void* modelColor = scene->GetVertexColorInformation();
+	void* modelBoneIds = scene->GetVertexBoneIdsInformation();
 	Skeleton* modelSkeleton = scene->GetModel()->GetSkeleton();
 	float* bonePosition = modelSkeleton->GetVertexPositionInformation();
 	void* boneNormal = modelSkeleton->GetVertexNormalInformation();
@@ -112,8 +115,8 @@ void Renderer::SetupBuffers(Scene* scene) {
 
 	// Model Position
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[Model_Vertex_Position_Buffer]);
-	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), modelPosition, GL_DYNAMIC_STORAGE_BIT);
-	glVertexAttribPointer(modelVertexPosition, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 4l * sizeof(float), modelPosition, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(modelVertexPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(modelVertexPosition);
 
 	// Model Colors
@@ -127,6 +130,12 @@ void Renderer::SetupBuffers(Scene* scene) {
 	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * 3l * sizeof(float), modelNormal, GL_DYNAMIC_STORAGE_BIT);
 	glVertexAttribPointer(modelVertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(modelVertexNormal);
+
+	// Model Vertex Bone Ids
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[Model_Vertex_Bone_Id_Buffer]);
+	glBufferStorage(GL_ARRAY_BUFFER, scene->GetVertexCount() * sizeof(int), modelBoneIds, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribIPointer(modelVertexBoneId, 1, GL_INT, GL_FALSE, 0);
+	glEnableVertexAttribArray(modelVertexBoneId);
 
 	glBindVertexArray(vaos[Bone_VAO]);
 
@@ -148,21 +157,10 @@ void Renderer::SetupBuffers(Scene* scene) {
 	glVertexAttribPointer(modelVertexNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 	glEnableVertexAttribArray(modelVertexNormal);
 
-	if (once) {
-		std::cout << "Pos: " << std::endl;
-		for (int i = 0; i < modelSkeleton->GetNumberOfBones() * 6; i += 6) {
-			std::cout << "Bone " << modelSkeleton->GetBones()[i / 6].name << std::endl;
-			std::cout << bonePosition[i] << ", " << bonePosition[i + 1] << ", " << bonePosition[i + 2] << std::endl;
-			std::cout << bonePosition[i + 3] << ", " << bonePosition[i + 4] << ", " << bonePosition[i + 5] << std::endl;
-			std::cout << std::endl;
-		}
-		once = false;
-		std::cout << "Total bones: " << modelSkeleton->GetNumberOfBones();
-	}
-
 	free(modelPosition);
 	free(modelNormal);
 	free(modelColor);
+	free(modelBoneIds);
 	free(bonePosition);
 	free(boneNormal);
 	free(boneColor);
@@ -185,6 +183,20 @@ void Renderer::RenderScene(Scene* scene) {
 	glUniformMatrix4fv(modelUniformId, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 	glUniformMatrix4fv(projUniformId, 1, GL_FALSE, glm::value_ptr(scene->GetCamera()->GetProjectionMatrix()));
 	glUniformMatrix4fv(viewUniformId, 1, GL_FALSE, glm::value_ptr(scene->GetCamera()->GetViewMatrix()));
+
+	glm::mat<4, 4, float> transforms[100];
+	auto& bones = scene->GetModel()->GetSkeleton()->GetBones();
+	for (int i = 0; i < bones.size(); i++) {
+		glm::mat4 transform = bones[i].transformation;
+		int parent = bones[i].parent;
+		while (parent != -1) {
+			transform = bones[parent].transformation * transform;
+			parent = bones[parent].parent;
+		}
+		transforms[i] = transform;
+	}
+
+	glUniformMatrix4fv(cumulativeBoneTransformsUniformId, 100, GL_FALSE, glm::value_ptr(transforms[0]));
 
 	glUniform1i(objectUniformId, 0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
