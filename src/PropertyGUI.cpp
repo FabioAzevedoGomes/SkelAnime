@@ -29,6 +29,9 @@ PropertyGUI::PropertyGUI(GLFWwindow* drawnToWindow, Scene* scene) {
 	shouldDisplay[DisplayableWindows::ARMATURE] = false;
 	shouldDisplay[DisplayableWindows::HELP] = true;
 	shouldDisplay[DisplayableWindows::FILES] = false;
+
+	this->t = glfwGetTime();
+	this->dt = 0.0f;
 }
 
 PropertyGUI::~PropertyGUI() {
@@ -180,6 +183,103 @@ void PropertyGUI::DrawFileWindow() {
 	shouldDisplay[FILES] = p_open;
 }
 
+void PropertyGUI::DrawAnimationWindow() {
+	using namespace std::literals;
+
+	ImGui::Begin("Animation");
+
+	static std::string keyframe;
+
+	static std::string inputName(40, '\0');
+	static float inputTime = 0.0f;
+
+	static bool editMenu = true;
+	static bool play = false;
+	static bool loop = false;
+	static float tCurrent;
+
+	const float tMin = 0.0f;
+	const float tMax = 2.0f;
+
+		
+	if (ImGui::RadioButton("Edit##Menu", editMenu))
+		editMenu = true;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Play##Menu", !editMenu))
+		editMenu = false;
+
+	auto animation = scene->GetAnimation();
+
+	if (editMenu) {
+	
+		for (auto& kf : animation->GetKeyframes()) {
+			if (ImGui::Selectable(kf.first.c_str(), keyframe == kf.first))
+				keyframe = kf.first;
+
+			ImGui::SameLine();
+			ImGui::Text("time: %.3f", kf.second.time);
+		}
+
+		ImGui::InputText("name", &inputName[0], inputName.capacity());
+		ImGui::DragFloat("time", &inputTime, 0.01f, tMin, tMax);
+
+		if (ImGui::Button("Add")) {
+			animation->AddKeyframe(inputName, inputTime, *scene->GetModel()->GetSkeleton());
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Load")) {
+			if (animation->GetKeyframes().find(keyframe) != animation->GetKeyframes().end())
+				*scene->GetModel()->GetSkeleton() = animation->GetKeyframes()[keyframe].pose;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Save")) {
+			if (animation->GetKeyframes().find(keyframe) != animation->GetKeyframes().end())
+				animation->GetKeyframes()[keyframe].pose = *scene->GetModel()->GetSkeleton();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Delete")) {
+			if (animation->GetKeyframes().find(keyframe) != animation->GetKeyframes().end())
+				animation->GetKeyframes().erase(keyframe);
+		}
+	}
+	else {
+
+		if (play) {
+
+			if (ImGui::Button("Pause###playbutton")) {
+				play = false;
+			}
+	
+			tCurrent += dt;
+			if (tCurrent > tMax) {
+				play = loop;
+				tCurrent = loop ? tMin : tMax;
+			}
+
+			if (animation->GetKeyframes().size() > 0)
+				animation->SetPose(tCurrent, tMin, tMax, scene->GetModel()->GetSkeleton());
+		}
+		else {
+			if (ImGui::Button("Play###playbutton")) {
+				play = true;
+				if (fabs(tCurrent - tMax) < 0.0001)
+					tCurrent = 0;
+			}
+		}
+
+		ImGui::SameLine();
+		ImGui::Checkbox("Loop", &loop);
+
+		ImGui::SliderFloat("Time", &tCurrent, tMin, tMax);
+	}
+
+
+	ImGui::End();
+}
+
 void PropertyGUI::DrawMenuBar() {
 	ImGui::BeginMainMenuBar();
 
@@ -208,6 +308,10 @@ void PropertyGUI::DrawMenuBar() {
 }
 
 void PropertyGUI::Draw() {
+
+	dt = glfwGetTime() - t;
+	t = glfwGetTime();
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	ImGui_ImplOpenGL3_NewFrame();
@@ -224,6 +328,8 @@ void PropertyGUI::Draw() {
 
 	if (shouldDisplay[FILES])
 		DrawFileWindow();
+
+	DrawAnimationWindow();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

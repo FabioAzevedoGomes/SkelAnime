@@ -27,6 +27,8 @@ private:
 	std::vector<bool> displayProperties;
 	Scene* scene;
 
+	float t, dt;
+
 protected:
 
 	void DrawBonePropertyWindow(std::vector<Bone>& bones, int index);
@@ -34,6 +36,7 @@ protected:
 	void DrawArmatureWindow();
 	void DrawHelpWindow();
 	void DrawFileWindow();
+	void DrawAnimationWindow();
 	void DrawMenuBar();
 
 public:

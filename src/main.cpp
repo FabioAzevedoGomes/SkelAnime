@@ -8,6 +8,10 @@
 #include "Renderer.hpp"
 #include "PropertyGUI.hpp"
 
+
+#include "glm/gtx/matrix_decompose.hpp"
+
+
 Assimp::Importer modelImporter;
 Assimp::Importer skeletonImporter;
 
@@ -32,7 +36,10 @@ std::pair<const aiScene*, const aiScene*> LoadModelsFromFiles(const std::string 
 	return { skeleton, model };
 }
 
+#include "Animation.hpp"
+
 int main(int argc, char** argv) {
+
 	if (argc < 2) {
 		LogErrorAndQuit("Please input skeleton and model files", 1);
 	}

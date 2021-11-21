@@ -150,9 +150,15 @@ Scene::Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair) {
 	ProcessModelNodesRecursively(skeletonModelPair.second->mRootNode, skeletonModelPair.second, vertices, skeleton);
 
 	this->model = new Model(skeleton, vertices);
+	this->animation = new Animation;
+	this->animation->AddKeyframe("Rest Pose", 0.0f, *model->GetRestSkeleton());
 }
 
 Scene::~Scene() {
+}
+
+Animation* Scene::GetAnimation() {
+	return this->animation;
 }
 
 Model* Scene::GetModel() {

@@ -38,7 +38,7 @@ add_executable(SkelAnime
   lib/FileBrowser/ImGuiFileBrowser.cpp
   src/shader_fragment.glsl
   src/shader_vertex.glsl
-  )
+   "src/Animation.cpp")
 set_property(TARGET SkelAnime PROPERTY DEBUG_POSTFIX _d)
 target_link_libraries(SkelAnime ${COMMON_LIBS})
 

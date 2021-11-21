@@ -12,9 +12,11 @@
 
 #include "Model.hpp"
 #include "Camera.hpp"
+#include "Animation.hpp"
 
 class Scene {
 private:
+	Animation* animation;
 	Model* model;
 	Camera* camera;
 
@@ -27,6 +29,7 @@ public:
 	Scene(std::pair<const aiScene*, const aiScene*> skeletonModelPair);
 	virtual ~Scene();
 
+	Animation* GetAnimation();
 	Model* GetModel();
 	Camera* GetCamera();
 	long GetVertexCount();
@@ -38,6 +41,9 @@ public:
 
 	void LoadPoseFromFile(const std::string& path);
 	void SavePoseToFile(const std::string& path);
+
+	void LoadAnimationFromFile(const std::string& path);
+	void SaveAnimationToFile(const std::string& path);
 };
 
 #endif // SKLEANIME_SCENE_HPP
